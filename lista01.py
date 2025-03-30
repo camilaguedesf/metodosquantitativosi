@@ -893,3 +893,229 @@ print("  * Aproximadamente 99.7% dos valores têm escores-z entre -3 e +3")
 
 ## Cap 3 - 44
 
+import numpy as np
+import scipy.stats as stats
+
+# Dados fornecidos na tabela
+pontos_vencedor = [90, 85, 75, 78, 71, 65, 72, 76, 77, 82]
+pontos_perdedor = [66, 66, 70, 57, 63, 62, 66, 70, 67, 56]
+margem_pontos = [24, 19, 5, 21, 8, 3, 6, 6, 10, 26]
+
+# a. Calcule a média e o desvio padrão para os pontos marcados pelo time vencedor
+media_pontos_vencedor = np.mean(pontos_vencedor)
+desvio_padrao_pontos_vencedor = np.std(pontos_vencedor, ddof=1)  # ddof=1 para desvio padrão amostral
+
+print(f"a. Pontos do time vencedor:")
+print(f"   Média: {media_pontos_vencedor:.2f}")
+print(f"   Desvio padrão: {desvio_padrao_pontos_vencedor:.2f}")
+
+# b. Suponha distribuição normal, estimando a porcentagem de jogos onde o vencedor marca mais de 90 pontos
+# Usando a distribuição normal com a média e desvio padrão calculados
+z_score = (90 - media_pontos_vencedor) / desvio_padrao_pontos_vencedor
+probabilidade = 1 - stats.norm.cdf(z_score)
+porcentagem = probabilidade * 100
+
+print(f"\nb. Porcentagem de jogos em que o time vencedor marca mais de 90 pontos:")
+print(f"   {porcentagem:.2f}%")
+
+# c. Calcule a média e o desvio padrão para a margem de pontos do time vitorioso
+media_margem = np.mean(margem_pontos)
+desvio_padrao_margem = np.std(margem_pontos, ddof=1)
+
+print(f"\nc. Margem de pontos do time vitorioso:")
+print(f"   Média: {media_margem:.2f}")
+print(f"   Desvio padrão: {desvio_padrao_margem:.2f}")
+
+## Cap 3 - 48
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Dados fornecidos
+dados = [5, 15, 18, 10, 8, 12, 16, 10, 6]
+
+# Ordenando os dados
+dados_ordenados = sorted(dados)
+print("Dados ordenados:", dados_ordenados)
+
+# Cálculo do resumo de cinco números
+minimo = min(dados)
+maximo = max(dados)
+mediana = np.median(dados)
+q1 = np.percentile(dados, 25)
+q3 = np.percentile(dados, 75)
+iqr = q3 - q1
+
+# Exibindo o resumo de cinco números
+print("\nResumo de cinco números (Five-number summary):")
+print(f"Mínimo: {minimo}")
+print(f"Q1 (Primeiro quartil): {q1}")
+print(f"Mediana: {mediana}")
+print(f"Q3 (Terceiro quartil): {q3}")
+print(f"Máximo: {maximo}")
+print(f"IQR (Intervalo interquartil): {iqr}")
+
+# Verificando outliers
+limite_inferior = q1 - 1.5 * iqr
+limite_superior = q3 + 1.5 * iqr
+print(f"\nLimite inferior para outliers: {limite_inferior}")
+print(f"Limite superior para outliers: {limite_superior}")
+
+outliers = [x for x in dados if x < limite_inferior or x > limite_superior]
+print(f"Outliers (se houver): {outliers}")
+
+# Criando o boxplot
+plt.figure(figsize=(10, 6))
+sns.boxplot(x=dados)
+plt.title('Boxplot dos dados')
+plt.xlabel('Valores')
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
+
+## Cap 3 - 56
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+import seaborn as sns
+
+# Dados fornecidos
+x = [6, 11, 15, 21, 27]
+y = [6, 9, 6, 17, 12]
+
+# a. Construir um diagrama de dispersão
+plt.figure(figsize=(10, 6))
+plt.scatter(x, y, color='blue', s=100)
+plt.title('Diagrama de Dispersão')
+plt.xlabel('Variável x')
+plt.ylabel('Variável y')
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# Adicionar labels aos pontos
+for i, (xi, yi) in enumerate(zip(x, y)):
+    plt.annotate(f'({xi}, {yi})', (xi, yi), xytext=(5, 5), textcoords='offset points')
+
+# Adicionar linha de tendência
+z = np.polyfit(x, y, 1)
+p = np.poly1d(z)
+plt.plot(x, p(x), "r--", alpha=0.8, label=f'Linha de tendência: y = {z[0]:.4f}x + {z[1]:.4f}')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# c. Calcular a covariância amostral
+covariancia = np.cov(x, y, ddof=1)[0, 1]  # ddof=1 para covariância amostral
+print(f"c. Covariância amostral: {covariancia:.4f}")
+
+# d. Calcular e interpretar o coeficiente de correlação amostral
+correlacao, p_valor = stats.pearsonr(x, y)
+print(f"d. Coeficiente de correlação amostral (r): {correlacao:.4f}")
+print(f"   p-valor: {p_valor:.4f}")
+
+# Interpretação do coeficiente de correlação
+if abs(correlacao) < 0.3:
+    interpretacao = "fraca"
+elif abs(correlacao) < 0.7:
+    interpretacao = "moderada"
+else:
+    interpretacao = "forte"
+
+if correlacao > 0:
+    direcao = "positiva"
+else:
+    direcao = "negativa"
+
+print(f"   Interpretação: Existe uma correlação {interpretacao} e {direcao} entre as variáveis x e y.")
+
+# Estatísticas descritivas adicionais
+print("\nEstatísticas descritivas:")
+print(f"Média de x: {np.mean(x):.4f}")
+print(f"Média de y: {np.mean(y):.4f}")
+print(f"Desvio padrão de x: {np.std(x, ddof=1):.4f}")
+print(f"Desvio padrão de y: {np.std(y, ddof=1):.4f}")
+
+# b. Análise do diagrama de dispersão
+print("\nb. O diagrama de dispersão indica:")
+if correlacao > 0.5:
+    print("- Uma tendência de crescimento de y conforme x aumenta")
+elif correlacao < -0.5:
+    print("- Uma tendência de decrescimento de y conforme x aumenta")
+else:
+    print("- Uma relação não muito clara entre as variáveis")
+
+if abs(correlacao) > 0.7:
+    print("- Uma forte associação linear entre as variáveis")
+elif abs(correlacao) > 0.3:
+    print("- Uma associação linear moderada entre as variáveis")
+else:
+    print("- Uma associação linear fraca entre as variáveis")
+
+## Cap 3 - 59
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+# Dados fornecidos
+percentagem_detectores = [0.50, 0.67, 0.74, 0.76, 0.77, 0.82, 0.81, 0.85, 0.86, 0.88, 0.90, 0.92, 0.95, 0.96, 0.97, 0.96, 0.96]
+mortes_por_milhao = [22.9, 20.8, 17.3, 20.5, 19.4, 18.9, 17.6, 16.2, 13.6, 14.4, 14.3, 13.0, 10.9, 10.9, 10.2, 8.4, 8.1]
+
+# Convertendo para percentuais (0-100) para melhor visualização
+percentagem_detectores_viz = [p * 100 for p in percentagem_detectores]
+
+# Criar DataFrame
+df = pd.DataFrame({
+    'Percentual_detectores': percentagem_detectores,
+    'Percentual_detectores_viz': percentagem_detectores_viz,
+    'Mortes_por_milhao': mortes_por_milhao
+})
+
+# a. Relação entre uso de detectores e mortes
+correlacao, p_valor = stats.pearsonr(percentagem_detectores, mortes_por_milhao)
+print(f"a. Relação entre uso de detectores de fumaça e mortes:")
+print(f"   Coeficiente de correlação: {correlacao:.4f}")
+print(f"   p-valor: {p_valor:.8f}")
+
+if correlacao < 0:
+    print("   Existe uma relação NEGATIVA entre o uso de detectores de fumaça e mortes por incêndio.")
+    print("   Isso significa que quanto maior a porcentagem de residências com detectores, menor é a taxa de mortalidade.")
+else:
+    print("   Existe uma relação POSITIVA entre o uso de detectores de fumaça e mortes por incêndio.")
+    print("   Isso significa que quanto maior a porcentagem de residências com detectores, maior é a taxa de mortalidade.")
+
+# b. Cálculo do coeficiente de correlação
+print(f"\nb. Coeficiente de correlação: {correlacao:.4f}")
+if abs(correlacao) < 0.3:
+    forca = "fraca"
+elif abs(correlacao) < 0.7:
+    forca = "moderada"
+else:
+    forca = "forte"
+    
+print(f"   Existe uma correlação {forca} e negativa entre o uso de detectores de fumaça e mortes por incêndios.")
+print(f"   Isso sugere que o aumento na adoção de detectores de fumaça está associado a uma diminuição nas mortes por incêndio.")
+print(f"   O valor p de {p_valor:.8f} indica que essa correlação é estatisticamente significativa.")
+
+# c. Gráfico de dispersão
+plt.figure(figsize=(10, 6))
+sns.regplot(x='Percentual_detectores_viz', y='Mortes_por_milhao', data=df, 
+            scatter_kws={'s': 80, 'alpha': 0.7}, line_kws={'color': 'red'})
+
+plt.title('Relação entre Percentual de Residências com Detectores de Fumaça e Mortes por Incêndio')
+plt.xlabel('Percentual de Residências com Detectores de Fumaça (%)')
+plt.ylabel('Mortes por Incêndio por Milhão de Habitantes')
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# Adicionar equação da linha de tendência
+slope, intercept, r_value, p_value, std_err = stats.linregress(percentagem_detectores_viz, mortes_por_milhao)
+equation = f'y = {slope:.4f}x + {intercept:.4f}'
+plt.annotate(f'Equação: {equation}\nR² = {r_value**2:.4f}', 
+             xy=(0.05, 0.95), xycoords='axes fraction', 
+             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+
+plt.tight_layout()
+plt.show()
