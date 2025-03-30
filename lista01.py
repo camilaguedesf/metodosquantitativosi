@@ -414,3 +414,482 @@ plt.ylabel('Média da Taxa de Crescimento (%)')
 plt.show()
 
 ## Cap 3 - 12
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+import locale
+from datetime import datetime
+
+# Tentar configurar locale para português (opcional, pode não funcionar em todos os sistemas)
+try:
+    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+except:
+    pass  # Se não funcionar, usaremos método alternativo
+
+# Criando o DataFrame com os dados da tabela
+data = {
+    'Data_str': [
+        '22 de setembro de 2011', '22 de setembro de 2011', '29 de setembro de 2011',
+        '6 de outubro de 2011', '13 de outubro de 2011', '20 de outubro de 2011',
+        '27 de outubro de 2011', '3 de novembro de 2011', '10 de novembro de 2011',
+        '17 de novembro de 2011', '8 de dezembro de 2011', '12 de janeiro de 2012',
+        '19 de janeiro de 2012', '26 de janeiro de 2012', '2 de fevereiro de 2012',
+        '9 de fevereiro de 2012', '16 de fevereiro de 2012', '23 de fevereiro de 2012',
+        '8 de março de 2012', '29 de março de 2012', '5 de abril de 2012'
+    ],
+    'Telespectadores': [
+        14.1, 14.7, 14.6, 13.6, 13.6, 14.9, 14.5, 16.0, 15.9, 15.1, 14.0, 16.1,
+        15.8, 16.1, 16.5, 16.2, 15.7, 16.2, 15.0, 14.0, 13.3
+    ]
+}
+
+# Criando o DataFrame
+df = pd.DataFrame(data)
+
+# Função para converter as datas manualmente
+def convert_pt_date(date_str):
+    day, month_str, year = date_str.split(' de ')
+    
+    month_dict = {
+        'janeiro': 1, 'fevereiro': 2, 'março': 3, 'abril': 4,
+        'maio': 5, 'junho': 6, 'julho': 7, 'agosto': 8,
+        'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
+    }
+    
+    month = month_dict[month_str]
+    return pd.Timestamp(year=int(year), month=month, day=int(day))
+
+# Aplicando a função de conversão
+df['Data'] = df['Data_str'].apply(convert_pt_date)
+
+# Removendo a coluna com strings originais
+df = df.drop('Data_str', axis=1)
+
+# Ordenando o DataFrame por data
+df = df.sort_values('Data')
+
+# a. Calcule o número mínimo e máximo de telespectadores
+min_viewers = df['Telespectadores'].min()
+max_viewers = df['Telespectadores'].max()
+min_date = df.loc[df['Telespectadores'] == min_viewers, 'Data'].iloc[0]
+max_date = df.loc[df['Telespectadores'] == max_viewers, 'Data'].iloc[0]
+
+print("a. Número mínimo e máximo de telespectadores:")
+print(f"   Mínimo: {min_viewers} milhões (em {min_date.strftime('%d/%m/%Y')})")
+print(f"   Máximo: {max_viewers} milhões (em {max_date.strftime('%d/%m/%Y')})")
+print("\n")
+
+# b. Calcule a média, a mediana e a moda
+mean_viewers = df['Telespectadores'].mean()
+median_viewers = df['Telespectadores'].median()
+mode_viewers = df['Telespectadores'].mode()[0]  # Pega a primeira moda (pode haver múltiplas)
+
+print("b. Média, mediana e moda dos telespectadores:")
+print(f"   Média: {mean_viewers:.2f} milhões")
+print(f"   Mediana: {median_viewers:.2f} milhões")
+print(f"   Moda: {mode_viewers:.1f} milhões")
+print("\n")
+
+# c. Calcule o primeiro e o terceiro quartis
+q1 = df['Telespectadores'].quantile(0.25)
+q3 = df['Telespectadores'].quantile(0.75)
+
+print("c. Primeiro e terceiro quartis:")
+print(f"   Primeiro quartil (Q1): {q1:.2f} milhões")
+print(f"   Terceiro quartil (Q3): {q3:.2f} milhões")
+print("\n")
+
+# d. Análise se a audiência aumentou ou diminuiu ao longo da temporada 2011-2012
+# Criando uma coluna numérica para representar o tempo (dias desde o primeiro episódio)
+df['Dias'] = (df['Data'] - df['Data'].min()).dt.days
+
+# Calculando a correlação entre dias e número de telespectadores
+correlation = df['Dias'].corr(df['Telespectadores'])
+
+# Linha de tendência (regressão linear)
+slope, intercept, r_value, p_value, std_err = stats.linregress(
+    df['Dias'], df['Telespectadores']
+)
+
+print("d. Análise da tendência de audiência ao longo da temporada 2011-2012:")
+print(f"   Coeficiente de correlação: {correlation:.4f}")
+print(f"   Inclinação da linha de tendência: {slope:.4f} milhões por dia")
+if slope > 0:
+    print("   A audiência teve uma tendência de AUMENTO ao longo da temporada.")
+else:
+    print("   A audiência teve uma tendência de DIMINUIÇÃO ao longo da temporada.")
+
+if abs(correlation) < 0.3:
+    print("   A correlação é fraca, indicando que a tendência não é muito significativa.")
+elif abs(correlation) < 0.7:
+    print("   A correlação é moderada.")
+else:
+    print("   A correlação é forte, indicando uma tendência clara.")
+
+# Primeira metade vs. segunda metade da temporada
+half_point = len(df) // 2
+first_half_avg = df.iloc[:half_point]['Telespectadores'].mean()
+second_half_avg = df.iloc[half_point:]['Telespectadores'].mean()
+
+print(f"   Média da primeira metade da temporada: {first_half_avg:.2f} milhões")
+print(f"   Média da segunda metade da temporada: {second_half_avg:.2f} milhões")
+
+if second_half_avg > first_half_avg:
+    print(f"   Aumento de {second_half_avg - first_half_avg:.2f} milhões na segunda metade.")
+else:
+    print(f"   Diminuição de {first_half_avg - second_half_avg:.2f} milhões na segunda metade.")
+
+# Visualização da tendência
+plt.figure(figsize=(12, 6))
+plt.plot(df['Data'], df['Telespectadores'], marker='o', linestyle='-', color='b')
+plt.title('Audiência de The Big Bang Theory - Temporada 2011-2012')
+plt.xlabel('Data de Transmissão')
+plt.ylabel('Telespectadores (milhões)')
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# Adicionando linha de tendência
+plt.plot(df['Data'], intercept + slope * df['Dias'], 'r--', 
+         label=f'Tendência (inclinação={slope:.4f})')
+
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Boxplot para análise estatística
+plt.figure(figsize=(8, 6))
+plt.boxplot(df['Telespectadores'], vert=False)
+plt.title('Distribuição da Audiência')
+plt.xlabel('Telespectadores (milhões)')
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.show()
+
+## Cap 3 - 29
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Dados de Pomona
+pomona_dados = np.array([28, 42, 58, 48, 45, 55, 60, 49, 50])
+
+# a) Calcular a amplitude e a amplitude interquartil
+pomona_min = np.min(pomona_dados)
+pomona_max = np.max(pomona_dados)
+pomona_amplitude = pomona_max - pomona_min
+
+# Amplitude interquartil (IQR)
+pomona_q1 = np.percentile(pomona_dados, 25)
+pomona_q3 = np.percentile(pomona_dados, 75)
+pomona_iqr = pomona_q3 - pomona_q1
+
+# b) Calcular a variância amostral e o desvio padrão da amostra
+pomona_variancia = np.var(pomona_dados, ddof=1)  # ddof=1 para variância amostral
+pomona_desvio_padrao = np.std(pomona_dados, ddof=1)
+
+# c) Comparações entre Pomona e Anaheim
+# Dados de Anaheim
+anaheim_media = 48.5
+anaheim_variancia = 136
+anaheim_desvio_padrao = 11.66
+
+# Calcular a média de Pomona para comparação
+pomona_media = np.mean(pomona_dados)
+
+# Função para visualizar as comparações
+def visualizar_comparacoes():
+    # Criar um gráfico de barras para comparar as estatísticas
+    labels = ['Média', 'Variância', 'Desvio Padrão']
+    pomona_stats = [pomona_media, pomona_variancia, pomona_desvio_padrao]
+    anaheim_stats = [anaheim_media, anaheim_variancia, anaheim_desvio_padrao]
+    
+    x = np.arange(len(labels))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    rects1 = ax.bar(x - width/2, pomona_stats, width, label='Pomona')
+    rects2 = ax.bar(x + width/2, anaheim_stats, width, label='Anaheim')
+    
+    ax.set_ylabel('Valores')
+    ax.set_title('Comparação das Estatísticas de Qualidade do Ar')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+    # Adicionar os valores nas barras
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height:.2f}',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    
+    autolabel(rects1)
+    autolabel(rects2)
+    
+    fig.tight_layout()
+    
+    # Também podemos realizar um boxplot para comparação da distribuição
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    ax2.boxplot([pomona_dados], labels=['Pomona'])
+    ax2.set_title('Boxplot da Qualidade do Ar em Pomona')
+    ax2.set_ylabel('Índice de Qualidade do Ar')
+    
+    plt.show()
+
+# Exibir os resultados
+print("\nResultados para Pomona:")
+print(f"a) Amplitude: {pomona_amplitude}")
+print(f"   Amplitude Interquartil (IQR): {pomona_iqr:.2f}")
+print(f"b) Variância Amostral: {pomona_variancia:.2f}")
+print(f"   Desvio Padrão Amostral: {pomona_desvio_padrao:.2f}")
+
+print("\nComparação entre Pomona e Anaheim:")
+print(f"Média: Pomona = {pomona_media:.2f}, Anaheim = {anaheim_media}")
+print(f"Variância: Pomona = {pomona_variancia:.2f}, Anaheim = {anaheim_variancia}")
+print(f"Desvio Padrão: Pomona = {pomona_desvio_padrao:.2f}, Anaheim = {anaheim_desvio_padrao}")
+
+print("\nInterpretação dos resultados:")
+if pomona_media > anaheim_media:
+    print(f"- A qualidade do ar em Pomona tem um índice médio mais alto ({pomona_media:.2f}) do que em Anaheim ({anaheim_media}).")
+elif pomona_media < anaheim_media:
+    print(f"- A qualidade do ar em Pomona tem um índice médio mais baixo ({pomona_media:.2f}) do que em Anaheim ({anaheim_media}).")
+else:
+    print(f"- A qualidade do ar em Pomona e Anaheim têm índices médios semelhantes ({pomona_media:.2f}).")
+
+if pomona_variancia > anaheim_variancia:
+    print(f"- Os dados de Pomona apresentam maior variabilidade (variância = {pomona_variancia:.2f}) do que os de Anaheim (variância = {anaheim_variancia}).")
+elif pomona_variancia < anaheim_variancia:
+    print(f"- Os dados de Pomona apresentam menor variabilidade (variância = {pomona_variancia:.2f}) do que os de Anaheim (variância = {anaheim_variancia}).")
+else:
+    print(f"- Os dados de Pomona e Anaheim apresentam variabilidade semelhante.")
+
+if pomona_desvio_padrao > anaheim_desvio_padrao:
+    print(f"- Os dados de Pomona apresentam maior dispersão (desvio padrão = {pomona_desvio_padrao:.2f}) do que os de Anaheim (desvio padrão = {anaheim_desvio_padrao}).")
+elif pomona_desvio_padrao < anaheim_desvio_padrao:
+    print(f"- Os dados de Pomona apresentam menor dispersão (desvio padrão = {pomona_desvio_padrao:.2f}) do que os de Anaheim (desvio padrão = {anaheim_desvio_padrao}).")
+else:
+    print(f"- Os dados de Pomona e Anaheim apresentam dispersão semelhante.")
+
+## Cap 3 - 34
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Dados dos tempos dos corredores (em minutos)
+tempos_quarto_milha = np.array([0.92, 0.98, 1.04, 0.90, 0.99])
+tempos_milha = np.array([4.52, 4.35, 4.60, 4.70, 4.50])
+
+# Calcular estatísticas para as duas amostras
+# Para os tempos de um quarto de milha
+media_quarto = np.mean(tempos_quarto_milha)
+dp_quarto = np.std(tempos_quarto_milha, ddof=1)  # desvio padrão amostral (ddof=1)
+cv_quarto = (dp_quarto / media_quarto) * 100  # coeficiente de variação em percentual
+
+# Para os tempos de uma milha
+media_milha = np.mean(tempos_milha)
+dp_milha = np.std(tempos_milha, ddof=1)  # desvio padrão amostral (ddof=1)
+cv_milha = (dp_milha / media_milha) * 100  # coeficiente de variação em percentual
+
+# Função para criar visualizações
+def visualizar_resultados():
+    # Criar um gráfico para comparar os coeficientes de variação
+    categorias = ['Quarto de Milha', 'Milha Completa']
+    coeficientes = [cv_quarto, cv_milha]
+    
+    plt.figure(figsize=(10, 6))
+    plt.bar(categorias, coeficientes, color=['blue', 'green'])
+    plt.title('Coeficiente de Variação por Tipo de Prova')
+    plt.ylabel('Coeficiente de Variação (%)')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    for i, v in enumerate(coeficientes):
+        plt.text(i, v + 0.3, f'{v:.2f}%', ha='center')
+    
+    # Gráficos de dispersão para visualizar a variabilidade dos tempos
+    plt.figure(figsize=(12, 5))
+    
+    plt.subplot(1, 2, 1)
+    plt.scatter(range(1, len(tempos_quarto_milha) + 1), tempos_quarto_milha, color='blue')
+    plt.axhline(y=media_quarto, color='red', linestyle='--', label=f'Média: {media_quarto:.2f}')
+    plt.fill_between(range(1, len(tempos_quarto_milha) + 1), 
+                     media_quarto - dp_quarto, 
+                     media_quarto + dp_quarto, 
+                     alpha=0.2, color='red', label=f'DP: ±{dp_quarto:.3f}')
+    plt.title('Tempos da Prova de Quarto de Milha')
+    plt.xlabel('Corredor')
+    plt.ylabel('Tempo (minutos)')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend()
+    
+    plt.subplot(1, 2, 2)
+    plt.scatter(range(1, len(tempos_milha) + 1), tempos_milha, color='green')
+    plt.axhline(y=media_milha, color='red', linestyle='--', label=f'Média: {media_milha:.2f}')
+    plt.fill_between(range(1, len(tempos_milha) + 1), 
+                     media_milha - dp_milha, 
+                     media_milha + dp_milha, 
+                     alpha=0.2, color='red', label=f'DP: ±{dp_milha:.3f}')
+    plt.title('Tempos da Prova de Uma Milha')
+    plt.xlabel('Corredor')
+    plt.ylabel('Tempo (minutos)')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
+# Exibir resultados
+print("\nAnálise dos Tempos de Corrida - Equipe Universitária")
+print("-" * 50)
+
+print("\nProva de Um Quarto de Milha:")
+print(f"Tempos (minutos): {', '.join([str(t) for t in tempos_quarto_milha])}")
+print(f"Média: {media_quarto:.3f} minutos")
+print(f"Desvio Padrão: {dp_quarto:.3f} minutos")
+print(f"Coeficiente de Variação: {cv_quarto:.2f}%")
+
+print("\nProva de Uma Milha:")
+print(f"Tempos (minutos): {', '.join([str(t) for t in tempos_milha])}")
+print(f"Média: {media_milha:.3f} minutos")
+print(f"Desvio Padrão: {dp_milha:.3f} minutos")
+print(f"Coeficiente de Variação: {cv_milha:.2f}%")
+
+print("\nAnálise Comparativa:")
+if cv_quarto < cv_milha:
+    print(f"O coeficiente de variação da prova de um quarto de milha ({cv_quarto:.2f}%) é menor que o da prova de uma milha ({cv_milha:.2f}%).")
+    print("Isso indica que os tempos na prova de um quarto de milha são mais consistentes, o que contradiz a declaração do treinador.")
+    print("A declaração do técnico não se sustenta com base nessa análise estatística.")
+elif cv_quarto > cv_milha:
+    print(f"O coeficiente de variação da prova de um quarto de milha ({cv_quarto:.2f}%) é maior que o da prova de uma milha ({cv_milha:.2f}%).")
+    print("Isso indica que os tempos na prova de uma milha são mais consistentes, o que confirma a declaração do treinador.")
+    print("A declaração do técnico é suportada pela análise estatística.")
+else:
+    print(f"Os coeficientes de variação são iguais ({cv_quarto:.2f}%).")
+    print("Não há diferença de consistência entre as duas provas com base nessa análise.")
+
+print("\nInterpretação do Coeficiente de Variação:")
+print("O coeficiente de variação (CV) expressa a variabilidade dos dados em relação à média.")
+print("Quanto menor o CV, maior a consistência dos dados (menor variabilidade relativa).")
+print("Um CV menor indica tempos mais homogêneos entre os corredores.")
+
+## Cap 3 - 36
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Parâmetros da amostra
+media = 500
+desvio_padrao = 100
+
+# Valores para calcular os escores-z
+valores = np.array([520, 650, 500, 450, 280])
+
+# Calcular os escores-z para cada valor
+escores_z = (valores - media) / desvio_padrao
+
+# Criar uma função para visualizar os resultados
+def visualizar_distribuicao():
+    # Criar um gráfico da distribuição normal com os pontos marcados
+    x = np.linspace(media - 4*desvio_padrao, media + 4*desvio_padrao, 1000)
+    y = stats.norm.pdf(x, media, desvio_padrao)
+    
+    plt.figure(figsize=(12, 6))
+    plt.plot(x, y, 'b-', linewidth=2, label='Distribuição Normal')
+    
+    # Marcar a média
+    plt.axvline(x=media, color='r', linestyle='--', label=f'Média = {media}')
+    
+    # Marcar cada valor e seu escore-z
+    colors = ['green', 'purple', 'orange', 'brown', 'magenta']
+    for i, (valor, z, color) in enumerate(zip(valores, escores_z, colors)):
+        plt.axvline(x=valor, color=color, linestyle='-', 
+                   label=f'Valor = {valor}, z = {z:.2f}')
+        
+    plt.title('Distribuição Normal com Escores-z')
+    plt.xlabel('Valores')
+    plt.ylabel('Densidade de Probabilidade')
+    plt.legend(loc='best')
+    plt.grid(True)
+    
+    # Gráfico de barras dos escores-z
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(range(len(valores)), escores_z, color=colors)
+    
+    # Adicionar rótulos às barras
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        if height < 0:
+            va = 'top'
+            offset = -0.3
+        else:
+            va = 'bottom'
+            offset = 0.3
+        plt.text(bar.get_x() + bar.get_width()/2., height + offset,
+                f'z = {escores_z[i]:.2f}\n({valores[i]})',
+                ha='center', va=va)
+    
+    plt.axhline(y=0, color='black', linestyle='-')
+    plt.axhline(y=1, color='green', linestyle='--', alpha=0.7, label='z = +1')
+    plt.axhline(y=-1, color='green', linestyle='--', alpha=0.7, label='z = -1')
+    plt.axhline(y=2, color='orange', linestyle='--', alpha=0.7, label='z = +2')
+    plt.axhline(y=-2, color='orange', linestyle='--', alpha=0.7, label='z = -2')
+    
+    plt.title('Escores-z para os Valores Fornecidos')
+    plt.xlabel('Valores da Amostra')
+    plt.ylabel('Escore-z')
+    plt.xticks(range(len(valores)), [str(v) for v in valores])
+    plt.grid(True, axis='y')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
+# Exibir os resultados
+print("\nCálculo de Escores-z com Média = 500 e Desvio Padrão = 100")
+print("-" * 60)
+print(f"Fórmula do Escore-z: z = (x - μ) / σ, onde:")
+print(f"  - x é o valor a ser padronizado")
+print(f"  - μ é a média da distribuição (500)")
+print(f"  - σ é o desvio padrão da distribuição (100)")
+print("-" * 60)
+
+# Criar uma tabela com os resultados
+print("\nResultados:")
+print(f"{'Valor':<10} | {'Cálculo':<20} | {'Escore-z':<10} | {'Interpretação':<40}")
+print("-" * 85)
+
+for valor, z in zip(valores, escores_z):
+    calculo = f"({valor} - 500) / 100"
+    
+    # Interpretação do escore-z
+    if abs(z) < 1:
+        interpretacao = "Próximo à média (menos de 1 DP de distância)"
+    elif abs(z) < 2:
+        interpretacao = "Moderadamente distante da média (entre 1 e 2 DP)"
+    elif abs(z) < 3:
+        interpretacao = "Consideravelmente distante da média (entre 2 e 3 DP)"
+    else:
+        interpretacao = "Extremamente distante da média (mais de 3 DP)"
+        
+    if z > 0:
+        interpretacao += ", acima da média"
+    elif z < 0:
+        interpretacao += ", abaixo da média"
+    
+    print(f"{valor:<10} | {calculo:<20} | {z:.2f}{' ':<6} | {interpretacao:<40}")
+
+# Informações adicionais sobre escores-z
+print("\nObservações:")
+print("- O escore-z representa quantos desvios padrão um valor está acima ou abaixo da média")
+print("- Valores positivos estão acima da média, valores negativos estão abaixo")
+print("- Na distribuição normal:")
+print("  * Aproximadamente 68% dos valores têm escores-z entre -1 e +1")
+print("  * Aproximadamente 95% dos valores têm escores-z entre -2 e +2")
+print("  * Aproximadamente 99.7% dos valores têm escores-z entre -3 e +3")
+
+## Cap 3 - 44
+
